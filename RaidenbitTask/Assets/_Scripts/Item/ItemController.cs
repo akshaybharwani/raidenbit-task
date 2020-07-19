@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
 
@@ -17,10 +19,16 @@ public class ItemController : MonoBehaviour
     // JSON parsed
     public GameObject itemPrefab;
 
+    [Header("Items Parent")] 
+    public Transform itemsParent;
+
     [Header("JSON Data File")] 
     // Using JSON Data File as a TextAsset will allow
     // for easy reading
     public TextAsset JSONDataFile;
+
+    // Reference to store ImagePath of the Items
+    [NonSerialized] public string ImagePath;
 
     #endregion
 
@@ -36,6 +44,12 @@ public class ItemController : MonoBehaviour
     {
         // Load JSON From Data File at the Start of the App
         LoadJSONFromFile();
+        
+        // Set Fields other than Item List
+        SetMainFieldsFromData();
+        
+        // Then Generate Item Prefabs
+        GenerateItemPrefabsFromData();
     }
 
     /// <summary>
@@ -48,19 +62,30 @@ public class ItemController : MonoBehaviour
 
         // Deserialize JSON from the string and assign to a
         // Collection Array
-        _itemCollection = JsonUtility.FromJson<ItemCollection>(json);
+        _itemCollection = JsonConvert.DeserializeObject<ItemCollection>(json);
     }
 
     /// <summary>
     /// Instantiates Item Prefabs based on JSON parsed
     /// from the Data File
     /// </summary>
-    private void GenerateItemPrefabs()
+    private void GenerateItemPrefabsFromData()
     {
         // Looping through each Item in the ItemCollection
         foreach (var item in _itemCollection.items)
         {
-            
+            // Instantiate a new ItemPrefab
+            var newItem = Instantiate(itemPrefab, itemsParent, false);
+
+            // Set Item Values for the newly created Item GameObject
+            newItem.GetComponent<ItemManager>().SetItemValues(item, ImagePath);
         }
+    }
+
+    private void SetMainFieldsFromData()
+    {
+        messageOfTheDayText.text = _itemCollection.messageOfTheDay;
+
+        ImagePath = _itemCollection.imagePath;
     }
 }

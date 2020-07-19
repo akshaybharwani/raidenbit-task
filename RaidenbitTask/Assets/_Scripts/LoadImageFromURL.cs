@@ -6,42 +6,38 @@ using UnityEngine.UI;
 
 public class LoadImageFromURL : MonoBehaviour
 {
-    /// <summary>
-    /// Makes a UnityWebRequest, gets the Image and applies it to
-    /// the Image Component specified
-    /// </summary>
-    /// <param name="url"></param>
-    /// <param name="image"></param>
-    public void GetImageFromURLAndAssigntoImage(string url, Image image)
+    private void Start()
     {
-        StartCoroutine(ImageRequest(url, req =>
-        {
-            if (req.isNetworkError || req.isHttpError)
-            {
-                //Debug.Log($"{req.error}: {req.downloadHandler.text}");
-            } else
-            {
-                // Get the texture out using a helper downloadhandler
-                Texture2D texture = DownloadHandlerTexture.GetContent(req);
-                // Save it into the Image UI's sprite
-                image.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), 
-                    new Vector2(0.5f, 0.5f));
-            }
-        }));
+        
     }
-    
-    /// <summary>
-    /// Makes a UnityWebRequest based on the URL
-    /// </summary>
-    /// <param name="url"></param>
-    /// <param name="callback"></param>
-    /// <returns></returns>
-    IEnumerator ImageRequest(string url, Action<UnityWebRequest> callback)
+
+    public IEnumerator DownloadImageFromURLAndAssign(string url, Image image)
     {
-        using (UnityWebRequest req = UnityWebRequestTexture.GetTexture(url))
+        // Create a Unity Web Request for Texture
+        UnityWebRequest www = UnityWebRequestTexture.GetTexture(url);
+
+        //Send Request and wait
+        yield return www.SendWebRequest();
+
+        // If there is an error then return
+        if (www.isHttpError || www.isNetworkError)
         {
-            yield return req.SendWebRequest();
-            callback(req);
+            Debug.Log("Error while Receiving: " + www.error);
+        }
+        else
+        {
+            //Load Image
+            Texture2D texture2d = DownloadHandlerTexture.GetContent(www);
+
+            // Create a Sprite out of the Texture
+            Sprite sprite = null;
+            sprite = Sprite.Create(texture2d, new Rect(0, 0, texture2d.width, texture2d.height), Vector2.zero);
+
+            if (sprite != null)
+            {
+                // Assign the Sprite to the Image
+                image.sprite = sprite;
+            }
         }
     }
 }
